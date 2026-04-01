@@ -1,0 +1,95 @@
+---
+title: "CSS Container Queries: Component-Level Responsiveness"
+date: "2026-02-28"
+description: "Container queries let components respond to their parent's size rather than the viewport — here's why that matters and how to use them."
+tags: ["css", "frontend"]
+published: true
+---
+
+Media queries have always felt slightly wrong for component-based design. A card component shouldn't need to know it's inside a sidebar — it should just adapt to the space it's given. Container queries fix this.
+
+## The problem with media queries for components
+
+Imagine a `PostCard` component. In a sidebar it's narrow. On the home page it's full-width. With media queries, you'd write:
+
+```css
+/* Works, but PostCard now knows about global layout */
+@media (min-width: 768px) {
+  .post-card { display: grid; grid-template-columns: auto 1fr; }
+}
+```
+
+This breaks when the viewport is wide but the card is in a narrow column. The component has no way to know how much space it actually has.
+
+## Container queries
+
+Define a containment context, then query it:
+
+```css
+.card-wrapper {
+  container-type: inline-size;
+}
+
+.post-card {
+  display: flex;
+  flex-direction: column;
+}
+
+@container (min-width: 400px) {
+  .post-card {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+```
+
+Now the card lays out horizontally whenever its container is at least 400px wide — regardless of viewport size.
+
+## Named containers
+
+You can name containers for more precise queries:
+
+```css
+.sidebar {
+  container-type: inline-size;
+  container-name: sidebar;
+}
+
+@container sidebar (max-width: 300px) {
+  .widget { font-size: 0.875rem; }
+}
+```
+
+This is useful when components are nested inside multiple containers and you need to target a specific ancestor.
+
+## Tailwind v4 support
+
+Tailwind v4 includes container query utilities out of the box:
+
+```html
+<div class="@container">
+  <div class="flex flex-col @md:flex-row gap-4">
+    <!-- Switches to row layout when container ≥ 28rem -->
+  </div>
+</div>
+```
+
+The `@` prefix distinguishes container breakpoints from viewport breakpoints.
+
+## Browser support
+
+Container queries have been in all major browsers since late 2023. If you're not supporting very old browsers, you can use them today without a polyfill.
+
+## When to use them
+
+Use container queries for:
+- Card components that appear in different contexts (sidebar, grid, full-width)
+- Navigation components that adapt between desktop sidebar and mobile drawer
+- Any reusable component that lives in layouts you don't fully control
+
+Keep using media queries for:
+- Global layout (header height, sidebar visibility)
+- Typography scale changes that apply site-wide
+- Anything that genuinely relates to viewport size
+
+Container queries don't replace media queries — they give you a better tool for the component layer.

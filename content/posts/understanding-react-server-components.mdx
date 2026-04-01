@@ -1,0 +1,88 @@
+---
+title: "Understanding React Server Components"
+date: "2026-03-10"
+description: "What React Server Components actually are, how they differ from client components, and when to use each."
+tags: ["react", "nextjs", "architecture"]
+published: true
+---
+
+React Server Components (RSC) are one of the most significant shifts in how React applications are structured. After working with them for a while, here's how I think about them.
+
+## The mental model
+
+The key insight: **Server Components never run in the browser.** They run on the server (or at build time), render to a special format, and are streamed to the client. They cannot use browser APIs, state, or effects.
+
+Client Components are what React has always been — they run in the browser and can use hooks, events, and browser APIs. In Next.js App Router, all components are Server Components by default. You opt into client behaviour with `'use client'`.
+
+```
+Server Component               Client Component
+─────────────────────          ─────────────────────
+✓ async/await                  ✓ useState, useEffect
+✓ direct DB/file access        ✓ onClick, onChange
+✓ zero client JS               ✓ browser APIs
+✗ no useState                  ✗ no async component
+✗ no event handlers            ✗ no direct DB access
+```
+
+## What you can do in a Server Component
+
+```typescript
+// This runs at build time (or request time with dynamic rendering)
+// No useState, no hooks — just an async function
+export default async function PostList() {
+  // Direct file/DB access — no API route needed
+  const posts = await db.query('SELECT * FROM posts ORDER BY date DESC')
+
+  return (
+    <ul>
+      {posts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+No `useEffect`, no loading state, no API endpoint. The data is fetched before the HTML reaches the browser.
+
+## The boundary
+
+`'use client'` marks the boundary between server and client. Everything imported by a Client Component is also treated as a client module:
+
+```tsx
+'use client'
+
+import { useState } from 'react'
+
+// This whole subtree runs on the client
+export function Counter() {
+  const [count, setCount] = useState(0)
+  return <button onClick={() => setCount(c => c + 1)}>{count}</button>
+}
+```
+
+You can pass Server Component output as `children` to Client Components — that's how you thread Server Components through an interactive wrapper without losing the server rendering benefits.
+
+## When to reach for `'use client'`
+
+A simple decision tree:
+
+1. Does it need `useState` or `useReducer`? → Client
+2. Does it need `useEffect`? → Client
+3. Does it handle events (`onClick`, `onChange`)? → Client
+4. Does it need browser APIs (`localStorage`, `window`, `navigator`)? → Client
+5. Otherwise → Server
+
+In practice, most of an app can be Server Components. Only the interactive leaves of the component tree need to be Client Components.
+
+## The performance story
+
+Server Components eliminate the client bundle for everything that stays on the server. A page that fetches from a DB, formats dates, and renders static HTML ships zero JavaScript for those components. The browser only downloads JS for the interactive parts.
+
+This matters more than it sounds. The average Next.js page historically shipped 70–150 KB of JS just to hydrate server-rendered markup. With RSC, much of that goes away.
+
+## What this means for architecture
+
+Think of your component tree as two zones: a server zone for data fetching, computation, and layout, and a client zone for interactivity. Keep the boundary as far from the root as possible. Push `'use client'` down to the leaves.
+
+That's the whole mental model. Once it clicks, the App Router's conventions feel natural rather than arbitrary.

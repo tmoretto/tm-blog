@@ -1,0 +1,91 @@
+---
+title: "Building a Blog with Next.js App Router and Contentlayer"
+date: "2026-03-25"
+description: "A walkthrough of how this blog was built — App Router, MDX, Contentlayer, Shiki, and Tailwind all working together."
+tags: ["nextjs", "mdx", "contentlayer", "tailwind"]
+published: true
+---
+
+Building a personal blog from scratch is one of the best ways to learn a stack. Here's how this one came together.
+
+## The stack
+
+The goal was simple: write posts in MDX, have them render fast, look good, and be easy to deploy.
+
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Next.js 15 (App Router) | Static generation, file-based routing |
+| Content | MDX + Contentlayer | Typed frontmatter, computed fields |
+| Highlighting | Shiki | Accurate, VS Code-quality themes |
+| Styles | Tailwind CSS | Utility-first, no context switching |
+
+## Setting up Contentlayer
+
+Contentlayer reads your MDX files and generates typed TypeScript definitions. First, define your document type:
+
+```typescript
+// contentlayer.config.ts
+import { defineDocumentType, makeSource } from 'contentlayer2/source-files'
+import readingTime from 'reading-time'
+
+export const Post = defineDocumentType(() => ({
+  name: 'Post',
+  filePathPattern: 'posts/**/*.mdx',
+  contentType: 'mdx',
+  fields: {
+    title: { type: 'string', required: true },
+    date: { type: 'date', required: true },
+    description: { type: 'string', required: true },
+    tags: { type: 'list', of: { type: 'string' }, default: [] },
+    published: { type: 'boolean', default: true },
+  },
+  computedFields: {
+    slug: {
+      type: 'string',
+      resolve: (post) => post._raw.sourceFileName.replace(/\.mdx$/, ''),
+    },
+    readingTime: {
+      type: 'json',
+      resolve: (post) => readingTime(post.body.raw),
+    },
+  },
+}))
+```
+
+Now `allPosts` is fully typed — no `any` in sight.
+
+## Shiki syntax highlighting
+
+Shiki uses the same grammar and theme files as VS Code, so the output looks exactly like your editor. The key is creating a singleton to avoid re-initialising the highlighter on every request:
+
+```typescript
+// lib/shiki.ts
+import { createHighlighter, type Highlighter } from 'shiki'
+
+let highlighter: Highlighter | null = null
+
+export async function getHighlighter(): Promise<Highlighter> {
+  if (highlighter) return highlighter
+  highlighter = await createHighlighter({
+    langs: ['typescript', 'tsx', 'javascript', 'bash', 'json'],
+    themes: ['github-light', 'github-dark'],
+  })
+  return highlighter
+}
+```
+
+## Static generation
+
+Every post page uses `generateStaticParams` so the entire site is pre-rendered at build time — no database calls at runtime:
+
+```typescript
+export async function generateStaticParams() {
+  return getAllPublishedPosts().map((post) => ({ slug: post.slug }))
+}
+```
+
+The result is a site that scores well on Core Web Vitals without any tricks.
+
+## Wrapping up
+
+The combination of Contentlayer's typed content, Shiki's accurate highlighting, and Tailwind's `prose` plugin makes for a pleasant writing and reading experience. Total JavaScript shipped to the browser is minimal because almost everything is a Server Component.

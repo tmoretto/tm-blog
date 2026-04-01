@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Shiki dual-theme: show light tokens in light mode, dark tokens in dark mode */
+.shiki span {
+  color: var(--shiki-light);
+}
+.dark .shiki span {
+  color: var(--shiki-dark);
+}
+.shiki {
+  background-color: var(--shiki-light-bg) !important;
+}
+.dark .shiki {
+  background-color: var(--shiki-dark-bg) !important;
+}

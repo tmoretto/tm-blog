@@ -1,0 +1,107 @@
+---
+title: "Git Commands I Use Every Day"
+date: "2026-02-14"
+description: "A practical list of git commands and aliases that make day-to-day development faster — beyond the basics of add, commit, push."
+tags: ["git", "tooling", "productivity"]
+published: true
+---
+
+Most developers know `git add`, `git commit`, and `git push`. Here are the commands that make up the rest of my daily git workflow.
+
+## `git log --oneline --graph`
+
+The default `git log` output is noisy. This shows a compact, visual branch history:
+
+```bash
+git log --oneline --graph --decorate --all
+```
+
+I have it aliased as `git lg`. The output looks like:
+
+```bash
+* 3f2a1b4 (HEAD -> main) Add dark mode toggle
+* 8c9e2d1 Build post listing page
+* 1a4b7f3 (origin/main) Configure Shiki syntax highlighting
+```
+
+## `git stash push -m`
+
+Always name your stashes. Unnamed stashes become mysterious after a few days:
+
+```bash
+git stash push -m "wip: refactoring auth middleware"
+```
+
+List them with `git stash list`, apply by name with `git stash apply stash^{/wip}`.
+
+## `git commit --fixup`
+
+When you spot a mistake in a recent commit, instead of a "fix typo" commit, create a fixup:
+
+```bash
+git commit --fixup HEAD~2
+```
+
+Then when you're ready to clean up history before pushing:
+
+```bash
+git rebase -i --autosquash HEAD~5
+```
+
+The fixup commits are automatically moved and squashed into their targets.
+
+## `git bisect`
+
+Binary search through commit history to find which commit introduced a bug:
+
+```bash
+git bisect start
+git bisect bad           # current commit is broken
+git bisect good v1.2.0   # this tag was working
+
+# git checks out the midpoint commit
+# test it, then:
+git bisect good   # or git bisect bad
+
+# repeat until git identifies the culprit
+git bisect reset
+```
+
+This is invaluable when a subtle bug crept in somewhere over dozens of commits.
+
+## `git worktree`
+
+Review a PR while keeping your current work intact — no stashing:
+
+```bash
+git worktree add ../project-pr-123 origin/feature/new-auth
+cd ../project-pr-123
+# review, run tests, etc.
+git worktree remove ../project-pr-123
+```
+
+Each worktree is a separate working directory sharing the same git history.
+
+## `git diff --word-diff`
+
+For prose or long strings, word-level diffs are much more readable than line-level:
+
+```bash
+git diff --word-diff HEAD~1
+```
+
+Output shows `[-removed-]` and `{+added+}` inline within the line.
+
+## Useful aliases
+
+```bash
+[alias]
+  lg   = log --oneline --graph --decorate --all
+  st   = status -sb
+  undo = reset HEAD~1 --mixed
+  aliases = config --get-regexp alias
+```
+
+Add these to `~/.gitconfig` under `[alias]`.
+
+These commands make the 20% of git operations that aren't covered by the basics feel just as natural.

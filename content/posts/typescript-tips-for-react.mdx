@@ -1,0 +1,107 @@
+---
+title: "TypeScript Tips for React Developers"
+date: "2026-03-18"
+description: "Practical TypeScript patterns that make React code safer and easier to refactor — from component props to async data."
+tags: ["typescript", "react"]
+published: true
+---
+
+TypeScript and React are a natural fit, but a few patterns make a big difference in how maintainable your code is over time.
+
+## Type your props explicitly
+
+Rely on inference where you can, but always declare component prop interfaces:
+
+```typescript
+interface ButtonProps {
+  label: string
+  onClick: () => void
+  variant?: 'primary' | 'secondary' | 'ghost'
+  disabled?: boolean
+}
+
+export function Button({ label, onClick, variant = 'primary', disabled = false }: ButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`btn btn-${variant}`}
+    >
+      {label}
+    </button>
+  )
+}
+```
+
+Optional props with defaults are expressed cleanly with destructuring defaults — no need for `Props['variant'] | undefined` gymnastics.
+
+## Use discriminated unions for state
+
+Instead of a tangle of booleans, model loading states as a discriminated union:
+
+```typescript
+type AsyncState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: Error }
+
+function useUser(id: string) {
+  const [state, setState] = React.useState<AsyncState<User>>({ status: 'idle' })
+
+  // ...fetch logic
+  return state
+}
+```
+
+Rendering becomes a simple switch — no undefined checks, no risk of accessing `data` while `status === 'error'`.
+
+```tsx
+const state = useUser('123')
+
+switch (state.status) {
+  case 'loading': return <Spinner />
+  case 'error':   return <ErrorMessage error={state.error} />
+  case 'success': return <Profile user={state.data} />
+  default:        return null
+}
+```
+
+## Narrow with `satisfies`
+
+The `satisfies` operator lets you validate a value against a type without widening it:
+
+```typescript
+const routes = {
+  home: '/',
+  blog: '/blog',
+  about: '/about',
+} satisfies Record<string, string>
+
+// routes.home is still typed as '/', not string
+const home: '/' = routes.home
+```
+
+This is useful for configuration objects where you want autocomplete and error-checking without losing literal types.
+
+## Type-safe event handlers
+
+`React.ChangeEvent` and `React.MouseEvent` are generic — use them:
+
+```typescript
+function SearchInput() {
+  const [query, setQuery] = React.useState('')
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    setQuery(e.target.value)
+  }
+
+  return <input value={query} onChange={handleChange} />
+}
+```
+
+Explicit return type `void` on handlers catches accidental returns that would confuse React.
+
+## Wrapping up
+
+These patterns cost almost nothing to adopt and pay dividends when you come back to code three months later. TypeScript's type narrowing, discriminated unions, and explicit prop interfaces turn "it probably works" into "it definitely works".
