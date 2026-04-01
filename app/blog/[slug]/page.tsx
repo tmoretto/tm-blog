@@ -62,7 +62,7 @@ export default async function PostPage({ params }: Props) {
     url: `${SITE_URL}${post.url}`,
     author: {
       '@type': 'Person',
-      name: 'Tech Blog',
+      name: "TM's Blog",
     },
   }
 

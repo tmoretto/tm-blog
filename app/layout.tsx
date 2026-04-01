@@ -10,10 +10,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Tech Blog',
-    template: '%s | Tech Blog',
+    default: "TM's Blog",
+    template: "%s | TM's Blog",
   },
-  description: 'A personal tech blog about software development.',
+  description: 'Regular guy thoughts.',
   metadataBase: new URL(SITE_URL),
   alternates: {
     types: {

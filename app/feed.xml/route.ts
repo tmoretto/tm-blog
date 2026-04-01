@@ -22,9 +22,9 @@ export async function GET(): Promise<Response> {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tech Blog</title>
+    <title>TM's Blog</title>
     <link>${SITE_URL}</link>
-    <description>A personal tech blog about software development.</description>
+    <description>Regular guy thoughts.</description>
     <language>en</language>
     <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml" />
 ${items}
