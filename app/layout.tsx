@@ -3,11 +3,11 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { themeScript } from '@/lib/theme-script'
+import { SITE_URL } from '@/lib/config'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'
 
 export const metadata: Metadata = {
   title: {
@@ -22,14 +22,6 @@ export const metadata: Metadata = {
     },
   },
 }
-
-const themeScript = `(function(){
-  var stored = localStorage.getItem('theme');
-  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (stored === 'dark' || (!stored && prefersDark)) {
-    document.documentElement.classList.add('dark');
-  }
-})()`
 
 export default function RootLayout({
   children,

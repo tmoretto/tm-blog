@@ -9,6 +9,8 @@ export default function ThemeToggle() {
     const stored = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const isDark = stored ? stored === 'dark' : prefersDark
+    // Reading from localStorage (external system) on mount requires syncing state here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(isDark)
     document.documentElement.classList.toggle('dark', isDark)
   }, [])

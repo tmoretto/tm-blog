@@ -1,33 +1,38 @@
+// useMDXComponent returns a dynamic component from a compiled MDX string — this
+// is contentlayer2's documented rendering API and cannot be restructured to
+// avoid the react-hooks/static-components rule.
+/* eslint-disable react-hooks/static-components */
 'use client'
 
+import React, { useRef, useState } from 'react'
 import { useMDXComponent } from 'next-contentlayer2/hooks'
-import CodeBlock from '@/components/CodeBlock'
-import { highlight } from '@/lib/shiki'
-import { useEffect, useState } from 'react'
 
-function Pre({ children }: { children?: React.ReactNode }) {
-  const child = children as React.ReactElement<{
-    className?: string
-    children?: string
-  }> | null
+function Pre({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) {
+  const preRef = useRef<HTMLPreElement>(null)
+  const [copied, setCopied] = useState(false)
 
-  const lang = child?.props?.className?.replace('language-', '') ?? 'bash'
-  const code = child?.props?.children ?? ''
-  const [html, setHtml] = useState<string>('')
-
-  useEffect(() => {
-    highlight(String(code), lang).then(setHtml)
-  }, [code, lang])
-
-  if (!html) {
-    return (
-      <pre className="my-6 overflow-x-auto rounded-lg bg-gray-100 dark:bg-gray-900 p-4 text-sm">
-        <code>{code}</code>
-      </pre>
-    )
+  function handleCopy(): void {
+    const text = preRef.current?.textContent ?? ''
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
-  return <CodeBlock html={html} code={String(code)} />
+  return (
+    <div className="not-prose my-6 relative group rounded-lg text-sm overflow-x-auto">
+      <button
+        onClick={handleCopy}
+        aria-label={copied ? 'Code copied' : 'Copy code to clipboard'}
+        className="absolute top-2 right-2 px-2 py-1 text-xs rounded bg-gray-700 text-gray-200 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+      >
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
+      <pre ref={preRef} {...props}>
+        {children}
+      </pre>
+    </div>
+  )
 }
 
 interface PostBodyProps {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface TagFilterProps {
   tags: string[]
@@ -8,25 +8,15 @@ interface TagFilterProps {
 }
 
 export default function TagFilter({ tags, activeTag }: TagFilterProps) {
-  const router = useRouter()
-
   if (tags.length === 0) return null
 
-  function handleTag(tag: string): void {
-    if (tag === activeTag) {
-      router.push('/blog')
-    } else {
-      router.push(`/blog?tag=${encodeURIComponent(tag)}`)
-    }
-  }
-
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Filter posts by tag">
+    <nav className="flex flex-wrap gap-2" aria-label="Filter posts by tag">
       {tags.map((tag) => (
-        <button
+        <Link
           key={tag}
-          onClick={() => handleTag(tag)}
-          aria-pressed={tag === activeTag}
+          href={tag === activeTag ? '/blog' : `/blog?tag=${encodeURIComponent(tag)}`}
+          aria-current={tag === activeTag ? 'page' : undefined}
           className={`px-3 py-1 text-sm rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
             tag === activeTag
               ? 'bg-blue-600 text-white'
@@ -34,8 +24,8 @@ export default function TagFilter({ tags, activeTag }: TagFilterProps) {
           }`}
         >
           {tag}
-        </button>
+        </Link>
       ))}
-    </div>
+    </nav>
   )
 }

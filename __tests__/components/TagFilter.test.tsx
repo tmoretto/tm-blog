@@ -1,52 +1,53 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import TagFilter from '@/components/TagFilter'
 
-const mockPush = vi.fn()
-
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
-}))
-
 describe('TagFilter', () => {
-  beforeEach(() => {
-    mockPush.mockClear()
-  })
-
   it('renders nothing when tags array is empty', () => {
     const { container } = render(<TagFilter tags={[]} />)
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders a button for each tag', () => {
-    render(<TagFilter tags={['react', 'typescript', 'nextjs']} />)
-    expect(screen.getByRole('button', { name: 'react' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'typescript' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'nextjs' })).toBeInTheDocument()
-  })
-
-  it('navigates to /blog?tag=<tag> when an inactive tag is clicked', async () => {
+  it('renders a link for each tag', () => {
     render(<TagFilter tags={['react', 'typescript']} />)
-    await userEvent.click(screen.getByRole('button', { name: 'react' }))
-    expect(mockPush).toHaveBeenCalledWith('/blog?tag=react')
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(2)
+    expect(links[0]).toHaveTextContent('react')
+    expect(links[1]).toHaveTextContent('typescript')
   })
 
-  it('navigates to /blog when the active tag is clicked (deselect)', async () => {
-    render(<TagFilter tags={['react', 'typescript']} activeTag="react" />)
-    await userEvent.click(screen.getByRole('button', { name: 'react' }))
-    expect(mockPush).toHaveBeenCalledWith('/blog')
-  })
-
-  it('marks the active tag button with aria-pressed=true', () => {
-    render(<TagFilter tags={['react', 'typescript']} activeTag="react" />)
-    expect(screen.getByRole('button', { name: 'react' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
+  it('inactive tag links to /blog?tag=<tag>', () => {
+    render(<TagFilter tags={['react']} />)
+    expect(screen.getByRole('link', { name: 'react' })).toHaveAttribute(
+      'href',
+      '/blog?tag=react'
     )
-    expect(screen.getByRole('button', { name: 'typescript' })).toHaveAttribute(
-      'aria-pressed',
-      'false'
+  })
+
+  it('active tag links to /blog (deselect on click)', () => {
+    render(<TagFilter tags={['react']} activeTag="react" />)
+    expect(screen.getByRole('link', { name: 'react' })).toHaveAttribute(
+      'href',
+      '/blog'
+    )
+  })
+
+  it('marks the active tag with aria-current="page"', () => {
+    render(<TagFilter tags={['react', 'typescript']} activeTag="react" />)
+    expect(screen.getByRole('link', { name: 'react' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
+    expect(screen.getByRole('link', { name: 'typescript' })).not.toHaveAttribute(
+      'aria-current'
+    )
+  })
+
+  it('encodes special characters in tag hrefs', () => {
+    render(<TagFilter tags={['c++']} />)
+    expect(screen.getByRole('link', { name: 'c++' })).toHaveAttribute(
+      'href',
+      '/blog?tag=c%2B%2B'
     )
   })
 })

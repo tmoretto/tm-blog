@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getAllPublishedPosts, getPostBySlug } from '@/lib/posts'
 import PostBody from '@/components/PostBody'
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'
+import { SITE_URL } from '@/lib/config'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -82,12 +82,13 @@ export default async function PostPage({ params }: Props) {
         {post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {post.tags.map((tag) => (
-              <span
+              <Link
                 key={tag}
-                className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                href={`/blog?tag=${encodeURIComponent(tag)}`}
+                className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {tag}
-              </span>
+              </Link>
             ))}
           </div>
         )}
